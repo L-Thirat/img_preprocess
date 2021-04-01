@@ -14,10 +14,10 @@ project_path = "../../drive/MyDrive/projects/" + project
 # load config
 cfg = load_config("./")
 cfg["train_data_dir"] = project_path + "datasets/" + 'train'
+cfg["val_data_dir"] = project_path + "datasets/" + 'val'
 cfg["test_data_dir"] = project_path + "datasets/" + 'test'
-cfg["val_data_dir"] = project_path + "datasets/" + 'val'
-cfg["val_data_dir"] = project_path + "datasets/" + 'val'
 cfg["prep_train_dir"] = project_path + 'preprocess/' + 'train'
+cfg["prep_val_dir"] = project_path + 'preprocess/' + 'val'
 cfg["prep_test_dir"] = project_path + 'preprocess/' + 'test'
 
 
@@ -184,11 +184,11 @@ def generate_image_list(conf, mode):
     else:
         # todo random train-val
         if mode == "train":
-            data_dir = conf["prep_train_dir"]
-            aug_num = conf["augment_num"] * (1-conf["val_ratio"])
+            data_dir = conf["train_data_dir"]
+            aug_num = int(conf["augment_num"] * (1-conf["val_ratio"]))
         else:
-            data_dir = conf["prep_val_dir"]
-            aug_num = conf["augment_num"] * ["val_ratio"]
+            data_dir = conf["val_data_dir"]
+            aug_num = int(conf["augment_num"] * conf["val_ratio"])
         filenames = [f for f in os.listdir(data_dir) if is_image(f)]
         num_imgs = len(filenames)
         num_ave_aug = int(math.floor(aug_num / num_imgs))
@@ -258,7 +258,7 @@ def augment_images(filelist, conf, mode):
             cv2.imwrite(output_filepath, img)
 
 
-def segment_transform(filelist, conf, is_train=True):
+def segment_transform(filelist, conf, mode):
     not_change_pos_keys = {"", "n", "l", "nl"}
     img_resize = conf["img_resize"]
 
@@ -267,12 +267,12 @@ def segment_transform(filelist, conf, is_train=True):
         filename = file_split["filename"]
         imgname = file_split["imgname"]
         transform_type = imgname.split("_")[-1]
-        if is_train:
+        if mode=="train":
             org_dir = conf["train_data_dir"]
             prep_dir = conf["prep_train_dir"]
         else:
-            org_dir = conf["test_data_dir"]
-            prep_dir = conf["prep_test_dir"]
+            org_dir = conf["val_data_dir"]
+            prep_dir = conf["prep_val_dir"]
 
         if transform_type in not_change_pos_keys:
             org_xml_file = "_".join(imgname.split("_")[:-2]) + ".xml"
@@ -325,9 +325,9 @@ if __name__ == '__main__':
         # train
         img_list = generate_image_list(cfg, mode="train")
         augment_images(img_list, cfg, mode="train")
-    generated_files = os.listdir(cfg["prep_train_dir"])
-    segment_transform(generated_files, cfg)
-    print("Images(train): ", len(generated_files))
+        generated_files = os.listdir(cfg["prep_train_dir"])
+        segment_transform(generated_files, cfg, mode="train")
+        print("Images(train): ", len(generated_files))
 
     if not os.path.exists(cfg["prep_val_dir"]):
         os.makedirs(cfg["prep_val_dir"])
@@ -335,7 +335,7 @@ if __name__ == '__main__':
         img_list = generate_image_list(cfg, mode="val")
         augment_images(img_list, cfg, mode="val")
     generated_files = os.listdir(cfg["prep_val_dir"])
-    segment_transform(generated_files, cfg)
+    segment_transform(generated_files, cfg, mode="val")
     print("Images(val): ", len(generated_files))
 
     if not os.path.exists(cfg["prep_test_dir"]):
