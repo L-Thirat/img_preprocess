@@ -1,5 +1,5 @@
 obj: car
-augment_num: 8000
+augment_num: 1000
 val_ratio: 0.2
 grayscale: false
 img_resize: 412
