@@ -1,0 +1,14 @@
+obj: car
+grayscale: false
+img_resize: 416
+fill_square: true
+fill_square_color: 0
+augment_num: 10000
+p_rotate: 0
+rotate_angle_vari: 0
+p_light: 0.3
+light_vari: 50
+p_noise: 0.3
+noise_vari: 0
+p_horizonal_flip: 0
+p_vertical_flip: 0

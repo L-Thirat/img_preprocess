@@ -9,10 +9,10 @@ from utils import load_config, extract_filename, load_base_xml, write_base_cml
 # todo on colab
 project = "car/"
 # project_path = "../projects/" + project
-project_path = "../drive/MyDrive/projects/" + project
+project_path = "../../drive/MyDrive/projects/" + project
 
 # load config
-cfg = load_config(project_path)
+cfg = load_config("./")
 cfg["train_data_dir"] = project_path + "datasets/" + 'train'
 cfg["test_data_dir"] = project_path + "datasets/" + 'test'
 cfg["prep_train_dir"] = project_path + 'preprocess/' + 'train'
