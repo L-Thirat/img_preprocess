@@ -267,7 +267,7 @@ def segment_transform(filelist, conf, mode):
         filename = file_split["filename"]
         imgname = file_split["imgname"]
         transform_type = imgname.split("_")[-1]
-        if mode=="train":
+        if mode == "train":
             org_dir = conf["train_data_dir"]
             prep_dir = conf["prep_train_dir"]
         else:
@@ -290,6 +290,7 @@ def segment_transform(filelist, conf, mode):
                 p12.text = os.path.join(prep_dir, org_xml_file)
 
             # iterating throught the price values.
+            ratio_changed = 1
             for p11 in myroot.iter('width'):
                 # updates the price value
                 ratio_changed = int(p11.text) / img_resize
@@ -326,8 +327,10 @@ if __name__ == '__main__':
         img_list = generate_image_list(cfg, mode="train")
         augment_images(img_list, cfg, mode="train")
         generated_files = os.listdir(cfg["prep_train_dir"])
-        segment_transform(generated_files, cfg, mode="train")
         print("Images(train): ", len(generated_files))
+        segment_transform(generated_files, cfg, mode="train")
+        generated_files = os.listdir(cfg["prep_train_dir"])
+        print("XML-Images(train): ", len(generated_files))
 
     if not os.path.exists(cfg["prep_val_dir"]):
         os.makedirs(cfg["prep_val_dir"])
@@ -335,8 +338,10 @@ if __name__ == '__main__':
         img_list = generate_image_list(cfg, mode="val")
         augment_images(img_list, cfg, mode="val")
     generated_files = os.listdir(cfg["prep_val_dir"])
-    segment_transform(generated_files, cfg, mode="val")
     print("Images(val): ", len(generated_files))
+    segment_transform(generated_files, cfg, mode="val")
+    generated_files = os.listdir(cfg["prep_val_dir"])
+    print("XML-Images(val): ", len(generated_files))
 
     if not os.path.exists(cfg["prep_test_dir"]):
         os.makedirs(cfg["prep_test_dir"])
