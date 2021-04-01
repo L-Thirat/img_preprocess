@@ -1,9 +1,10 @@
 obj: car
+augment_num: 8000
+val_ratio: 0.2
 grayscale: false
-img_resize: 416
+img_resize: 412
 fill_square: true
 fill_square_color: 0
-augment_num: 10000
 p_rotate: 0
 rotate_angle_vari: 0
 p_light: 0.3

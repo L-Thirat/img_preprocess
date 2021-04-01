@@ -15,6 +15,8 @@ project_path = "../../drive/MyDrive/projects/" + project
 cfg = load_config("./")
 cfg["train_data_dir"] = project_path + "datasets/" + 'train'
 cfg["test_data_dir"] = project_path + "datasets/" + 'test'
+cfg["val_data_dir"] = project_path + "datasets/" + 'val'
+cfg["val_data_dir"] = project_path + "datasets/" + 'val'
 cfg["prep_train_dir"] = project_path + 'preprocess/' + 'train'
 cfg["prep_test_dir"] = project_path + 'preprocess/' + 'test'
 
@@ -174,25 +176,32 @@ def is_image(filename):
     return False
 
 
-def generate_image_list(conf, is_train=True):
+def generate_image_list(conf, mode):
     """Generate all image data[path,] from target path"""
-    if is_train:
-        filenames = [f for f in os.listdir(conf["train_data_dir"]) if is_image(f)]
+    if mode == "test":
+        img_list = [(os.sep.join([conf["test_data_dir"], f]), 1) for f in os.listdir(conf["test_data_dir"]) if
+                    is_image(f)]
+    else:
+        # todo random train-val
+        if mode == "train":
+            data_dir = conf["prep_train_dir"]
+            aug_num = conf["augment_num"] * (1-conf["val_ratio"])
+        else:
+            data_dir = conf["prep_val_dir"]
+            aug_num = conf["augment_num"] * ["val_ratio"]
+        filenames = [f for f in os.listdir(data_dir) if is_image(f)]
         num_imgs = len(filenames)
-        num_ave_aug = int(math.floor(conf["augment_num"] / num_imgs))
-        rem = conf["augment_num"] - num_ave_aug * num_imgs
+        num_ave_aug = int(math.floor(aug_num / num_imgs))
+        rem = aug_num - num_ave_aug * num_imgs
         lucky_seq = [True] * rem + [False] * (num_imgs - rem)
         random.shuffle(lucky_seq)
 
-        img_list = [(os.sep.join([conf["train_data_dir"], filename]), num_ave_aug + 1 if lucky else num_ave_aug)
+        img_list = [(os.sep.join([data_dir, filename]), num_ave_aug + 1 if lucky else num_ave_aug)
                     for filename, lucky in zip(filenames, lucky_seq)]
-    else:
-        img_list = [(os.sep.join([conf["test_data_dir"], f]), 1) for f in os.listdir(conf["test_data_dir"]) if
-                    is_image(f)]
     return img_list
 
 
-def augment_images(filelist, conf, is_train=True):
+def augment_images(filelist, conf, mode):
     """Generate augment images"""
     for filepath, n in filelist:
         img = read_img(filepath, conf["grayscale"])
@@ -208,7 +217,11 @@ def augment_images(filelist, conf, is_train=True):
         imgname = file_split["imgname"]
         ext = file_split["ext"]
 
-        if is_train:
+        if mode == "train" or mode == "val":
+            if mode == "train":
+                prep_dir = conf["prep_train_dir"]
+            else:
+                prep_dir = conf["prep_val_dir"]
             print('Augmenting {} ...'.format(filename))
             for i in range(n):
                 img_varied = img.copy()
@@ -238,7 +251,7 @@ def augment_images(filelist, conf, is_train=True):
                     img_varied = cv2.flip(img_varied, 0)
                     varied_imgname += 'v'
 
-                output_filepath = os.path.join(conf["prep_train_dir"], '{}{}'.format(varied_imgname, ext))
+                output_filepath = os.path.join(prep_dir, '{}{}'.format(varied_imgname, ext))
                 cv2.imwrite(output_filepath, img_varied)
         else:
             output_filepath = os.path.join(conf["prep_test_dir"], '{}{}'.format(imgname, ext))
@@ -310,17 +323,26 @@ if __name__ == '__main__':
     if not os.path.exists(cfg["prep_train_dir"]):
         os.makedirs(cfg["prep_train_dir"])
         # train
-        img_list = generate_image_list(cfg)
-        augment_images(img_list, cfg)
+        img_list = generate_image_list(cfg, mode="train")
+        augment_images(img_list, cfg, mode="train")
     generated_files = os.listdir(cfg["prep_train_dir"])
     segment_transform(generated_files, cfg)
     print("Images(train): ", len(generated_files))
 
+    if not os.path.exists(cfg["prep_val_dir"]):
+        os.makedirs(cfg["prep_val_dir"])
+        # val
+        img_list = generate_image_list(cfg, mode="val")
+        augment_images(img_list, cfg, mode="val")
+    generated_files = os.listdir(cfg["prep_val_dir"])
+    segment_transform(generated_files, cfg)
+    print("Images(val): ", len(generated_files))
+
     if not os.path.exists(cfg["prep_test_dir"]):
         os.makedirs(cfg["prep_test_dir"])
         # test
-        img_list = generate_image_list(cfg, is_train=False)
-        augment_images(img_list, cfg, is_train=False)
+        img_list = generate_image_list(cfg, mode="test")
+        augment_images(img_list, cfg, mode="test")
     generated_files = os.listdir(cfg["prep_test_dir"])
     # segment_transform(generated_files, cfg , is_train=False)
     print("Images(test): ", len(generated_files))
