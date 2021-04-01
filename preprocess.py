@@ -6,15 +6,15 @@ import os
 from utils import load_config, extract_filename, load_base_xml, write_base_cml
 
 # project setting
-project = "line/"
+project = "car/"
 project_path = "../projects/" + project
 
 # load config
 cfg = load_config(project_path)
-cfg["train_data_dir"] = project_path + "datasets/" + project + 'train'
-cfg["test_data_dir"] = project_path + "datasets/" + project + 'test'
-cfg["prep_train_dir"] = project_path + 'preprocess/' + project + 'train'
-cfg["prep_test_dir"] = project_path + 'preprocess/' + project + 'test'
+cfg["train_data_dir"] = project_path + "datasets/" + 'train'
+cfg["test_data_dir"] = project_path + "datasets/" + 'test'
+cfg["prep_train_dir"] = project_path + 'preprocess/' + 'train'
+cfg["prep_test_dir"] = project_path + 'preprocess/' + 'test'
 
 
 def read_img(img_path, grayscale):
