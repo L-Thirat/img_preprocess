@@ -26,13 +26,11 @@ flags.DEFINE_string('image_dir', '', 'Path to images')
 FLAGS = flags.FLAGS
 
 
-# TO-DO replace this with label map
+# todo replace this with label map
 def class_text_to_int(row_label):
-    if row_label == 'totoro':
-    # if row_label == 'tommad':
+    if row_label == 'car':
         return 1
-    elif row_label == 'nekobus':
-    # elif row_label == 'kk':
+    elif row_label == 'plate':
         return 2
     else:
         None
