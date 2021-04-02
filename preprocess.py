@@ -9,7 +9,7 @@ from utils import load_config, extract_filename, load_base_xml, write_base_cml
 # todo on colab
 project = "car/"
 # project_path = "../projects/" + project
-project_path = "../../../drive/MyDrive/projects/" + project
+project_path = "../drive/MyDrive/projects/" + project
 
 # load config
 cfg = load_config("./")
