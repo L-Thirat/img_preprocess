@@ -7,7 +7,7 @@ from utils import load_config, extract_filename, load_base_xml, write_base_cml
 
 # project setting
 # todo on colab
-project = "car/"
+project = "line/"
 # project_path = "../projects/" + project
 project_path = "../../drive/MyDrive/projects/" + project
 
@@ -321,16 +321,18 @@ def segment_transform(filelist, conf, mode):
 
 if __name__ == '__main__':
     # data augmentation
+    if not os.path.exists(project_path + 'preprocess/'):
+        os.makedirs(project_path + 'preprocess/')
     if not os.path.exists(cfg["prep_train_dir"]):
         os.makedirs(cfg["prep_train_dir"])
         # train
         img_list = generate_image_list(cfg, mode="train")
         augment_images(img_list, cfg, mode="train")
-        generated_files = os.listdir(cfg["prep_train_dir"])
-        print("Images(train): ", len(generated_files))
-        segment_transform(generated_files, cfg, mode="train")
-        generated_files = os.listdir(cfg["prep_train_dir"])
-        print("XML-Images(train): ", len(generated_files))
+    generated_files = os.listdir(cfg["prep_train_dir"])
+    print("Images(train): ", len(generated_files))
+    segment_transform(generated_files, cfg, mode="train")
+    generated_files = os.listdir(cfg["prep_train_dir"])
+    print("XML-Images(train): ", len(generated_files))
 
     if not os.path.exists(cfg["prep_val_dir"]):
         os.makedirs(cfg["prep_val_dir"])
