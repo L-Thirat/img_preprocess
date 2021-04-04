@@ -93,7 +93,7 @@ def apply_brightness_contrast(img, brightness=0, contrast=0):
 def random_light(img, light):
     """Random light brightness-contrast"""
     brightness = np.random.uniform(-light, light)
-    contrast = np.random.uniform(-light, light*2)
+    contrast = np.random.uniform(-light, light)
     return apply_brightness_contrast(img, brightness, contrast)
 
 
