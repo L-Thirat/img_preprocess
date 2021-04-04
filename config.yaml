@@ -7,9 +7,9 @@ fill_square: true
 fill_square_color: 0
 p_rotate: 0
 rotate_angle_vari: 0
-p_light: 0.9
-light_vari: 25
-p_noise: 0.0
+p_light: 0.3
+light_vari: 10
+p_noise: 0.3
 noise_vari: 0
 p_horizonal_flip: 0
 p_vertical_flip: 0
