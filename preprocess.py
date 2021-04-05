@@ -6,13 +6,14 @@ import os
 from utils import load_config, extract_filename, load_base_xml, write_base_cml
 
 # project setting
-# todo on colab
 project = "car/"
-# project_path = "../projects/" + project
-project_path = "../drive/MyDrive/projects/" + project
 
 # load config
 cfg = load_config("./")
+if cfg["colab_run"]:
+    project_path = "../drive/MyDrive/projects/" + project
+else:
+    project_path = "../projects/" + project
 cfg["train_data_dir"] = project_path + "datasets/" + 'train'
 cfg["val_data_dir"] = project_path + "datasets/" + 'val'
 cfg["test_data_dir"] = project_path + "datasets/" + 'test'
@@ -30,8 +31,17 @@ def read_img(img_path, grayscale):
     return im
 
 
+def is_image(filename):
+    img_suffix = [".png", ".jpg", ".jpeg"]
+    s = str.lower(filename)
+    for suffix in img_suffix:
+        if suffix == s[-4:]:
+            return True
+    return False
+
+
 def fill_squre(img, color):
-    """fix image which not square"""
+    """Fix image which not square"""
     height, width = img.shape[:2]
     max_val = max(height, width)
     if cfg["grayscale"]:
@@ -50,8 +60,13 @@ def fill_squre(img, color):
     return im
 
 
+"""
+Edit rotation
+"""
+
+
 def rotate_image(img, angle):
-    """Rotate image"""
+    """Edit rotation image"""
     h, w = img.shape[:2]
     angle %= 360
     M_rotate = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1)
@@ -65,7 +80,13 @@ def random_rotate(img, angle_vari):
     return rotate_image(img, angle)
 
 
+"""
+Edit light & contrast
+"""
+
+
 def apply_brightness_contrast(img, brightness=0, contrast=0):
+    """Edit light & contrast"""
     if brightness != 0:
         if brightness > 0:
             shadow = brightness
@@ -98,23 +119,18 @@ def random_light(img, light):
 
 
 """
-Parameters
-----------
-image : ndarray
-    Input image data. Will be converted to float.
-mode : str
-    One of the following strings, selecting the type of noise to add:
-
+Add Noise
     'gauss'     Gaussian-distributed additive noise.
     'poisson'   Poisson-distributed noise generated from the data.
     's&p'       Replaces random pixels with 0 or 1.
     'speckle'   Multiplicative noise using out = image + n*image,where
                 n is uniform noise with specified mean & variance.
-
 """
 
 
 def noisy(img, noise_typ):
+    """Add Noise"""
+    # todo for gray image
     if noise_typ == "gauss" or noise_typ == 0:
         img_shape = img.shape
         if len(img_shape) == 2:
@@ -167,15 +183,6 @@ def random_noise(img, noise_type):
     return noisy(img, noise_type)
 
 
-def is_image(filename):
-    img_suffix = [".png", ".jpg", ".jpeg"]
-    s = str.lower(filename)
-    for suffix in img_suffix:
-        if suffix == s[-4:]:
-            return True
-    return False
-
-
 def generate_image_list(conf, mode):
     """Generate all image data[path,] from target path"""
     if mode == "test":
@@ -185,7 +192,7 @@ def generate_image_list(conf, mode):
         # todo random train-val
         if mode == "train":
             data_dir = conf["train_data_dir"]
-            aug_num = int(conf["augment_num"] * (1-conf["val_ratio"]))
+            aug_num = int(conf["augment_num"] * (1 - conf["val_ratio"]))
         else:
             data_dir = conf["val_data_dir"]
             aug_num = int(conf["augment_num"] * conf["val_ratio"])
@@ -201,10 +208,10 @@ def generate_image_list(conf, mode):
     return img_list
 
 
-def augment_images(filelist, conf, mode):
+def augment_images(file_list, conf, mode):
     """Generate augment images"""
-    for filepath, n in filelist:
-        img = read_img(filepath, conf["grayscale"])
+    for file_path, n in file_list:
+        img = read_img(file_path, conf["grayscale"])
         height, width = img.shape[:2]
         if (height, width) != (conf["img_resize"], conf["img_resize"]):
             if height != width and conf["fill_square"]:
@@ -212,9 +219,8 @@ def augment_images(filelist, conf, mode):
             img = cv2.resize(img, (conf["img_resize"], conf["img_resize"]))
 
         # Extract file names
-        file_split = extract_filename(filepath)
-        filename = file_split["filename"]
-        imgname = file_split["imgname"]
+        file_split = extract_filename(file_path)
+        img_name = file_split["imgname"]
         ext = file_split["ext"]
 
         if mode == "train" or mode == "val":
@@ -222,51 +228,53 @@ def augment_images(filelist, conf, mode):
                 prep_dir = conf["prep_train_dir"]
             else:
                 prep_dir = conf["prep_val_dir"]
-            print('Augmenting {} ...'.format(filename))
             for i in range(n):
                 img_varied = img.copy()
-                varied_imgname = '{}_{:0>3d}_'.format(imgname, i)
+                varied_imgname = '{}_{:0>3d}_'.format(img_name, i)
 
                 if random.random() < conf["p_noise"]:
-                    # not change pos
+                    # not change pos fn
                     img_varied = random_noise(img_varied, conf["noise_vari"])
                     varied_imgname += 'n'
 
                 if random.random() < conf["p_light"]:
-                    # not change pos
+                    # not change pos fn
                     img_varied = random_light(img_varied, conf["light_vari"])
                     varied_imgname += 'l'
 
                 if random.random() < conf["p_rotate"]:
+                    # todo change pos fn
                     img_varied_ = random_rotate(img_varied, conf["rotate_angle_vari"])
                     if img_varied_.shape[0] >= conf["img_resize"] and img_varied_.shape[1] >= conf["img_resize"]:
                         img_varied = img_varied_
                     varied_imgname += 'r'
 
                 if random.random() < conf["p_horizonal_flip"]:
+                    # todo change pos fn
                     img_varied = cv2.flip(img_varied, 1)
                     varied_imgname += 'h'
 
                 if random.random() < conf["p_vertical_flip"]:
+                    # todo change pos fn
                     img_varied = cv2.flip(img_varied, 0)
                     varied_imgname += 'v'
 
-                output_filepath = os.path.join(prep_dir, '{}{}'.format(varied_imgname, ext))
-                cv2.imwrite(output_filepath, img_varied)
+                output_file_path = os.path.join(prep_dir, '{}{}'.format(varied_imgname, ext))
+                cv2.imwrite(output_file_path, img_varied)
         else:
-            output_filepath = os.path.join(conf["prep_test_dir"], '{}{}'.format(imgname, ext))
-            cv2.imwrite(output_filepath, img)
+            output_file_path = os.path.join(conf["prep_test_dir"], '{}{}'.format(img_name, ext))
+            cv2.imwrite(output_file_path, img)
 
 
-def segment_transform(filelist, conf, mode):
+def segment_transform(file_list, conf, mode):
     not_change_pos_keys = {"", "n", "l", "nl"}
     img_resize = conf["img_resize"]
 
-    for filepath in filelist:
-        file_split = extract_filename(filepath)
+    for file_path in file_list:
+        file_split = extract_filename(file_path)
         filename = file_split["filename"]
-        imgname = file_split["imgname"]
-        transform_type = imgname.split("_")[-1]
+        img_name = file_split["imgname"]
+        transform_type = img_name.split("_")[-1]
         if mode == "train":
             org_dir = conf["train_data_dir"]
             prep_dir = conf["prep_train_dir"]
@@ -275,46 +283,35 @@ def segment_transform(filelist, conf, mode):
             prep_dir = conf["prep_val_dir"]
 
         if transform_type in not_change_pos_keys:
-            org_xml_file = "_".join(imgname.split("_")[:-2]) + ".xml"
-            new_xml_file = imgname + ".xml"
+            org_xml_file = "_".join(img_name.split("_")[:-2]) + ".xml"
+            new_xml_file = img_name + ".xml"
             org_xml_path = os.path.join(org_dir, org_xml_file)
             mytree, myroot = load_base_xml(org_xml_path)
 
-            # iterating throught the price values.
+            # iterating throught the file config
             for p11 in myroot.iter('filename'):
-                # updates the price value
                 p11.text = filename
-            # iterating throught the price values.
             for p12 in myroot.iter('path'):
-                # updates the price value
                 p12.text = os.path.join(prep_dir, org_xml_file)
 
-            # iterating throught the price values.
+            # iterating throught the image config
             ratio_changed = 1
             for p11 in myroot.iter('width'):
-                # updates the price value
                 ratio_changed = int(p11.text) / img_resize
                 p11.text = str(img_resize)
-            # iterating throught the price values.
             for p12 in myroot.iter('height'):
-                # updates the price value
                 p12.text = str(img_resize)
-            # iterating throught the price values.
             for p1 in myroot.iter('xmin'):
-                # updates the price value
-                p1.text = str(int(p1.text) /ratio_changed)
+                p1.text = str(int(p1.text) / ratio_changed)
             for p2 in myroot.iter('xmax'):
-                # updates the price value
-                p2.text = str(int(p2.text) /ratio_changed)
+                p2.text = str(int(p2.text) / ratio_changed)
             for p3 in myroot.iter('ymin'):
-                # updates the price value
-                p3.text = str(int(p3.text) /ratio_changed)
+                p3.text = str(int(p3.text) / ratio_changed)
             for p4 in myroot.iter('ymax'):
-                # updates the price value
-                p4.text = str(int(p4.text) /ratio_changed)
+                p4.text = str(int(p4.text) / ratio_changed)
         else:
-            # todo position img change
-            raise()
+            # todo for position img changed case
+            raise ()
         new_xml_path = os.path.join(prep_dir, new_xml_file)
         write_base_cml(new_xml_path, mytree)
 
@@ -323,9 +320,10 @@ if __name__ == '__main__':
     # data augmentation
     if not os.path.exists(project_path + 'preprocess/'):
         os.makedirs(project_path + 'preprocess/')
+
+    # train
     if not os.path.exists(cfg["prep_train_dir"]):
         os.makedirs(cfg["prep_train_dir"])
-        # train
         img_list = generate_image_list(cfg, mode="train")
         augment_images(img_list, cfg, mode="train")
     generated_files = os.listdir(cfg["prep_train_dir"])
@@ -334,9 +332,9 @@ if __name__ == '__main__':
     generated_files = os.listdir(cfg["prep_train_dir"])
     print("XML-Images(train): ", len(generated_files))
 
+    # validate
     if not os.path.exists(cfg["prep_val_dir"]):
         os.makedirs(cfg["prep_val_dir"])
-        # val
         img_list = generate_image_list(cfg, mode="val")
         augment_images(img_list, cfg, mode="val")
     generated_files = os.listdir(cfg["prep_val_dir"])
@@ -345,11 +343,11 @@ if __name__ == '__main__':
     generated_files = os.listdir(cfg["prep_val_dir"])
     print("XML-Images(val): ", len(generated_files))
 
+    # test
     if not os.path.exists(cfg["prep_test_dir"]):
         os.makedirs(cfg["prep_test_dir"])
         # test
         img_list = generate_image_list(cfg, mode="test")
         augment_images(img_list, cfg, mode="test")
     generated_files = os.listdir(cfg["prep_test_dir"])
-    # segment_transform(generated_files, cfg , is_train=False)
     print("Images(test): ", len(generated_files))

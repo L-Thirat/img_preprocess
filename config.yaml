@@ -1,3 +1,4 @@
+colab_run: true
 obj: car
 augment_num: 1000
 val_ratio: 0.2
