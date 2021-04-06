@@ -11,6 +11,6 @@ rotate_angle_vari: 0  # not allowed for supervised-learning yet
 p_light: 0.4
 light_vari: 80
 p_noise: 0.4
-noise_vari: 0  # only 0 allowed
+noise_vari: 0  # only 0 allowed now
 p_horizonal_flip: 0  # not allowed for supervised-learning yet
 p_vertical_flip: 0  # not allowed for supervised-learning yet
