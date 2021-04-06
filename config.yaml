@@ -1,6 +1,6 @@
 colab_run: true
 obj: car
-augment_num: 1000
+augment_num: 10000
 val_ratio: 0.2
 grayscale: false
 img_resize: 640
@@ -8,9 +8,9 @@ fill_square: true
 fill_square_color: 0
 p_rotate: 0
 rotate_angle_vari: 0
-p_light: 0.3
+p_light: 0.4
 light_vari: 80
-p_noise: 0.3
-noise_vari: 0
+p_noise: 0.4
+noise_vari: 2
 p_horizonal_flip: 0
 p_vertical_flip: 0
