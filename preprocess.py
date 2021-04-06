@@ -5,10 +5,15 @@ import random
 import os
 from utils import load_config, extract_filename, load_base_xml, write_base_cml
 
-# project setting
+#############################################
+# Project Setting
+#############################################
 project = "car/"
 
-# load config
+
+#############################################
+# Load Config
+#############################################
 cfg = load_config("./")
 if cfg["colab_run"]:
     project_path = "../drive/MyDrive/projects/" + project
@@ -21,6 +26,10 @@ cfg["prep_train_dir"] = project_path + 'preprocess/' + 'train'
 cfg["prep_val_dir"] = project_path + 'preprocess/' + 'val'
 cfg["prep_test_dir"] = project_path + 'preprocess/' + 'test'
 
+
+#############################################
+# Implement Functions
+#############################################
 
 def read_img(img_path, grayscale):
     """Read image"""
@@ -218,7 +227,7 @@ def augment_images(file_list, conf, mode):
                 img = fill_squre(img, conf["fill_square_color"])
             img = cv2.resize(img, (conf["img_resize"], conf["img_resize"]))
 
-        # Extract file names
+        # IMAGE AUGMENTATION
         file_split = extract_filename(file_path)
         img_name = file_split["imgname"]
         ext = file_split["ext"]
@@ -267,6 +276,7 @@ def augment_images(file_list, conf, mode):
 
 
 def segment_transform(file_list, conf, mode):
+    """Copy data from base XML and change to new one"""
     not_change_pos_keys = {"", "n", "l", "nl"}
     img_resize = conf["img_resize"]
 
@@ -288,13 +298,13 @@ def segment_transform(file_list, conf, mode):
             org_xml_path = os.path.join(org_dir, org_xml_file)
             mytree, myroot = load_base_xml(org_xml_path)
 
-            # iterating throught the file config
+            # FILE DESCRIBE CONFIG
             for p11 in myroot.iter('filename'):
                 p11.text = filename
             for p12 in myroot.iter('path'):
                 p12.text = os.path.join(prep_dir, org_xml_file)
 
-            # iterating throught the image config
+            # IMAGE DATA CONFIG
             ratio_changed = 1
             for p11 in myroot.iter('width'):
                 ratio_changed = int(p11.text) / img_resize
@@ -311,17 +321,21 @@ def segment_transform(file_list, conf, mode):
                 p4.text = str(int(p4.text) / ratio_changed)
         else:
             # todo for position img changed case
-            raise ()
+            raise Exception("Error: Not implemented yet")
         new_xml_path = os.path.join(prep_dir, new_xml_file)
         write_base_cml(new_xml_path, mytree)
 
 
+#############################################
+# Run: Pre-process
+#############################################
+
 if __name__ == '__main__':
-    # data augmentation
+    # DATA AUGMENTATION DIRECTORY
     if not os.path.exists(project_path + 'preprocess/'):
         os.makedirs(project_path + 'preprocess/')
 
-    # train
+    # TRAIN
     if not os.path.exists(cfg["prep_train_dir"]):
         os.makedirs(cfg["prep_train_dir"])
         img_list = generate_image_list(cfg, mode="train")
@@ -332,7 +346,7 @@ if __name__ == '__main__':
     generated_files = os.listdir(cfg["prep_train_dir"])
     print("XML-Images(train): ", len(generated_files))
 
-    # validate
+    # VALIDATE
     if not os.path.exists(cfg["prep_val_dir"]):
         os.makedirs(cfg["prep_val_dir"])
         img_list = generate_image_list(cfg, mode="val")
