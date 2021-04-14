@@ -41,12 +41,8 @@ def read_img(img_path, grayscale):
 
 
 def is_image(filename):
-    img_suffix = [".png", ".jpg", ".jpeg"]
-    s = str.lower(filename)
-    for suffix in img_suffix:
-        if suffix == s[-4:]:
-            return True
-    return False
+    suffix_img_names = {"bmp", "jpg", "jpeg", "png"}
+    return str.lower(filename.split(".")[-1]) in suffix_img_names
 
 
 def fill_squre(img, color):
@@ -280,17 +276,18 @@ def segment_transform(file_list, conf, mode):
     not_change_pos_keys = {"", "n", "l", "nl"}
     img_resize = conf["img_resize"]
 
+    if mode == "train":
+        org_dir = conf["train_data_dir"]
+        prep_dir = conf["prep_train_dir"]
+    else:
+        org_dir = conf["val_data_dir"]
+        prep_dir = conf["prep_val_dir"]
+
     for file_path in file_list:
         file_split = extract_filename(file_path)
         filename = file_split["filename"]
         img_name = file_split["imgname"]
         transform_type = img_name.split("_")[-1]
-        if mode == "train":
-            org_dir = conf["train_data_dir"]
-            prep_dir = conf["prep_train_dir"]
-        else:
-            org_dir = conf["val_data_dir"]
-            prep_dir = conf["prep_val_dir"]
 
         if transform_type in not_change_pos_keys:
             org_xml_file = "_".join(img_name.split("_")[:-2]) + ".xml"
