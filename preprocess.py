@@ -8,7 +8,7 @@ from utils import load_config, extract_filename, load_base_xml, write_base_cml
 #############################################
 # Project Setting
 #############################################
-project = "car/"
+project = "nut/"
 
 
 #############################################
