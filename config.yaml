@@ -1,6 +1,6 @@
 colab_run: true
 obj: nut
-augment_num: 8000
+augment_num: 2000
 val_ratio: 0.2
 grayscale: false
 img_resize: 640
